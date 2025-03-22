@@ -2,11 +2,12 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import networkx as nx
-from activation import linear, d_linear, relu, d_relu, sigmoid, d_sigmoid, tanh, d_tanh
+from activation import linear, d_linear, relu, d_relu, sigmoid, d_sigmoid, tanh, d_tanh, softmax, d_softmax, leaky_relu, d_leaky_relu, elu, d_elu
+from regularization import l1_regularization, l2_regularization
 from tqdm import tqdm  
 
 class FFNN:
-    def __init__(self, layers, activations, loss_func, loss_grad, init_method, init_params):
+    def __init__(self, layers, activations, loss_func, loss_grad, init_method, init_params, reg_type=None, lambda_reg=0.0):
         """
         Parameter:
             layers      : List jumlah neuron tiap layer (misal: [784, 128, 10])
@@ -25,6 +26,8 @@ class FFNN:
         self.loss_grad = loss_grad
         self.init_method = init_method
         self.init_params = init_params
+        self.reg_type = reg_type
+        self.lambda_reg = lambda_reg
 
         self.weights = []
         self.biases = []
@@ -64,12 +67,23 @@ class FFNN:
                 delta *= d_tanh(z)
             elif act_func == linear:
                 delta *= d_linear(z)
+            elif act_func == softmax:
+                delta *= d_softmax(z)
+            elif act_func == leaky_relu:
+                delta *= d_leaky_relu(z)
+            elif act_func == elu:
+                delta *= d_elu(z)
             
             # buat softmax belom tau mo gimana ges
 
             a_prev = self.a_values[i]
             self.gradients[f"W{i+1}"] = np.dot(a_prev.T, delta) / m
             self.gradients[f"b{i+1}"] = np.sum(delta, axis=0, keepdims=True) / m
+
+            if self.reg_type == 'L1':
+                self.gradients[f"W{i+1}"] += self.lambda_reg * np.sign(self.weights[i]) / m
+            elif self.reg_type == 'L2':
+                self.gradients[f"W{i+1}"] += self.lambda_reg * self.weights[i] / m
 
             if i != 0:
                 delta = np.dot(delta, self.weights[i].T)
@@ -79,6 +93,29 @@ class FFNN:
             self.weights[i] -= learning_rate * self.gradients[f"W{i+1}"]
             self.biases[i] -= learning_rate * self.gradients[f"b{i+1}"]
 
+    def calculate_loss(self, X, y):
+        """Calculate loss with optional regularization term
+        
+        Parameters:
+            X: Input features
+            y: Target values
+        """
+        y_pred = self.forward(X) 
+        loss = self.loss_func(y, y_pred)
+        
+        if self.reg_type == 'L1':
+            l1_cost = 0
+            for w in self.weights:
+                l1_cost += self.lambda_reg * np.sum(np.abs(w)) / X.shape[0]
+            loss += l1_cost
+        elif self.reg_type == 'L2':
+            l2_cost = 0
+            for w in self.weights:
+                l2_cost += 0.5 * self.lambda_reg * np.sum(np.square(w)) / X.shape[0]
+            loss += l2_cost
+                
+        return loss
+    
     def train(self, X_train, y_train, X_val, y_val, batch_size, epochs, learning_rate, verbose):
         """
         Parameter:
@@ -113,8 +150,8 @@ class FFNN:
                 y_batch = y_train[start:end]
 
                 y_pred = self.forward(X_batch)
-                loss = self.loss_func(y_batch, y_pred)
-                epoch_loss += loss
+                loss = self.calculate_loss(X_batch, y_pred)
+                epoch_loss += loss.item() if hasattr(loss, 'item') else loss
 
                 self.backward(X_batch, y_batch)
                 self.update_weights(learning_rate)
@@ -122,8 +159,7 @@ class FFNN:
             avg_train_loss = epoch_loss / num_batches
             history["train_loss"].append(avg_train_loss)
             
-            y_val_pred = self.forward(X_val)
-            val_loss = self.loss_func(y_val, y_val_pred)
+            val_loss = self.calculate_loss(X_val, y_val)
             history["val_loss"].append(val_loss)
             
             if verbose:
