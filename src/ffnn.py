@@ -167,29 +167,231 @@ class FFNN:
         
         return history
 
-    def display_model_graph(self):
-        Graph = nx.DiGraph()
-        for layer in range(self.num_layers):
-            for neuron in range(self.layers[layer]):
-                Graph.add_node(f"L{layer}_N{neuron}", layer=layer)
+    def display_model_graph(self, max_neurons_per_layer=10, node_size=300, 
+                      weight_precision=2, min_display_value=1e-4):
+        """
+        Display a visualization of the neural network with weights, gradients and bias.
+        """
 
+        G = nx.DiGraph()
+
+        selected_neurons = {}
+        for layer in range(self.num_layers):
+            layer_size = self.layers[layer]
+            if layer_size <= max_neurons_per_layer:
+                selected_neurons[layer] = list(range(layer_size))
+            else:
+                indices = np.linspace(0, layer_size-1, max_neurons_per_layer).astype(int)
+                selected_neurons[layer] = list(indices)
+        
+        layer_colors = ['#8A2BE2', '#4682B4', '#3CB371', '#FFD700']  
+        
+        for layer in range(self.num_layers):
+            color = layer_colors[min(layer, len(layer_colors)-1)]
+            layer_name = "Input" if layer == 0 else "Output" if layer == self.num_layers-1 else f"Hidden {layer}"
+            
+            for neuron in selected_neurons[layer]:
+                G.add_node(f"L{layer}_N{neuron}", 
+                        layer=layer, 
+                        color=color,
+                        layer_name=layer_name)
+                
+            # Add bias node
+            if layer < self.num_layers - 1:  
+                G.add_node(f"L{layer}_B", 
+                        layer=layer, 
+                        color="#D3D3D3",  
+                        layer_name=layer_name,
+                        is_bias=True)
+        
+        max_abs_weight = 0
         for i in range(1, self.num_layers):
-            for j in range(self.layers[i-1]):
-                for k in range(self.layers[i]):
+            for j in selected_neurons[i-1]:
+                for k in selected_neurons[i]:
+                    max_abs_weight = max(max_abs_weight, abs(self.weights[i-1][j, k]))
+        
+        for i in range(1, self.num_layers):
+            for j in selected_neurons[i-1]:
+                for k in selected_neurons[i]:
                     weight = self.weights[i-1][j, k]
                     grad = self.gradients[f"W{i}"][j, k]
-                    Graph.add_edge(f"L{i-1}_N{j}", f"L{i}_N{k}", weight=weight, grad=grad)
-        
+
+                    if abs(weight) < min_display_value and abs(grad) < min_display_value:
+                        continue
+
+                    weight_str = f"{weight:.{weight_precision}f}" if abs(weight) >= min_display_value else "0"
+                    grad_str = f"{grad:.{weight_precision}f}" if abs(grad) >= min_display_value else "0"
+                    
+                    if weight < 0:
+                        color = 'red'
+                    else:
+                        color = 'green'
+                    
+                    width = 0.5 + 3.0 * (abs(weight) / max_abs_weight) if max_abs_weight > 0 else 0.5
+                    
+                    G.add_edge(f"L{i-1}_N{j}", f"L{i}_N{k}",
+                            weight=weight,
+                            gradient=grad,
+                            width=width,
+                            color=color,
+                            weight_str=weight_str,
+                            grad_str=grad_str,
+                            fontsize=8,
+                            edge_type="weight")
+            
+            for k in selected_neurons[i]:
+                bias = self.biases[i-1][0, k]
+                bias_grad = self.gradients[f"b{i}"][0, k]
+                
+                if abs(bias) < min_display_value and abs(bias_grad) < min_display_value:
+                    continue
+                    
+                bias_str = f"{bias:.{weight_precision}f}" if abs(bias) >= min_display_value else "0"
+                bias_grad_str = f"{bias_grad:.{weight_precision}f}" if abs(bias_grad) >= min_display_value else "0"
+                
+                color = 'orange' if bias >= 0 else 'purple'
+                
+                width = 0.5 + 2.0 * (abs(bias) / max_abs_weight) if max_abs_weight > 0 else 0.5
+                
+                G.add_edge(f"L{i-1}_B", f"L{i}_N{k}",
+                        weight=bias,
+                        gradient=bias_grad,
+                        width=width,
+                        color=color,
+                        weight_str=bias_str,
+                        grad_str=bias_grad_str,
+                        fontsize=8,
+                        edge_type="bias")
+
         pos = {}
         for layer in range(self.num_layers):
-            x = layer
-            y_values = list(range(self.layers[layer]))
-            for idx, neuron in enumerate(range(self.layers[layer])):
-                pos[f"L{layer}_N{neuron}"] = (x, -idx)
+            x = layer * 5  
+            neurons = selected_neurons[layer]
+            n_neurons = len(neurons)
+            
+            y_spacing = 1.5
+            total_height = (n_neurons - 1) * y_spacing
+            
+            for idx, neuron in enumerate(neurons):
+                y_pos = -total_height/2 + idx * y_spacing
+                pos[f"L{layer}_N{neuron}"] = (x, y_pos)
+            
+            if layer < self.num_layers - 1:
+                bias_y = -total_height/2 - 2
+                pos[f"L{layer}_B"] = (x, bias_y)
         
-        plt.figure(figsize=(12, 8))
-        nx.draw(Graph, pos, with_labels=True, node_color="lightblue", arrows=True)
-        plt.title("Struktur Jaringan, Bobot & Gradien")
+        fig, ax = plt.subplots(figsize=(15, 10), facecolor='white')
+        
+        regular_nodes = [n for n in G.nodes() if not G.nodes[n].get('is_bias', False)]
+        bias_nodes = [n for n in G.nodes() if G.nodes[n].get('is_bias', False)]
+        
+        nx.draw_networkx_nodes(G, pos,
+                            nodelist=regular_nodes,
+                            node_color=[G.nodes[n]['color'] for n in regular_nodes],
+                            node_size=node_size,
+                            ax=ax)
+        
+        if bias_nodes:
+            nx.draw_networkx_nodes(G, pos,
+                                nodelist=bias_nodes,
+                                node_color='lightgray',
+                                node_size=node_size * 0.8,
+                                node_shape='s',
+                                ax=ax)
+        
+        for u, v, data in G.edges(data=True):
+            edge_color = data['color']
+            width = data['width']
+            nx.draw_networkx_edges(G, pos,
+                                edgelist=[(u, v)],
+                                width=width,
+                                edge_color=edge_color,
+                                arrowsize=10,
+                                arrowstyle='->' if width > 1 else '-',
+                                connectionstyle="arc3,rad=0.1",
+                                alpha=0.7,
+                                ax=ax)
+        
+        node_labels = {n: n.split('_')[1] for n in G.nodes()}
+        nx.draw_networkx_labels(G, pos, 
+                            labels=node_labels,
+                            font_size=10,
+                            font_weight='bold')
+
+        edge_labels = {}
+        for u, v, data in G.edges(data=True):
+            edge_labels[(u, v)] = f"w: {data['weight_str']}\ng: {data['grad_str']}"
+        
+        for edge, label in edge_labels.items():
+            edge_data = G.get_edge_data(*edge)
+            x1, y1 = pos[edge[0]]
+            x2, y2 = pos[edge[1]]
+            
+            mid_x = (x1 + x2) / 2
+            mid_y = (y1 + y2) / 2 + 0.1 
+            
+            if edge_data['edge_type'] == 'weight':
+                bg_color = 'lightgreen' if edge_data['weight'] >= 0 else 'lightcoral'
+            else:  
+                bg_color = 'lightyellow' if edge_data['weight'] >= 0 else 'lavender'
+                
+            ax.text(mid_x, mid_y, label,
+                horizontalalignment='center',
+                verticalalignment='center',
+                fontsize=8,
+                bbox=dict(
+                    facecolor=bg_color,
+                    edgecolor='black',
+                    boxstyle='round,pad=0.3',
+                    alpha=0.8
+                ))
+        
+        for layer in range(self.num_layers):
+            layer_name = "Input Layer" if layer == 0 else "Output Layer" if layer == self.num_layers - 1 else f"Hidden {layer} Layer"
+            neuron_count = self.layers[layer]
+            title = f"{layer_name}\n({neuron_count} neurons)"
+            
+            x = layer * 5
+            if selected_neurons[layer]:
+                y_top = max([pos[f"L{layer}_N{n}"][1] for n in selected_neurons[layer]]) + 2
+            else:
+                y_top = 2
+                
+            color = layer_colors[min(layer, len(layer_colors)-1)]
+            ax.text(x, y_top, title,
+                horizontalalignment='center',
+                verticalalignment='center',
+                fontsize=12,
+                fontweight='bold',
+                bbox=dict(
+                    facecolor=color,
+                    edgecolor='black',
+                    boxstyle='round,pad=0.5',
+                    alpha=0.7
+                ))
+        
+        import matplotlib.patches as mpatches
+        legend_elements = [
+            mpatches.Patch(facecolor='green', alpha=0.7, label='Positive Weight'),
+            mpatches.Patch(facecolor='red', alpha=0.7, label='Negative Weight'),
+            mpatches.Patch(facecolor='orange', alpha=0.7, label='Positive Bias'),
+            mpatches.Patch(facecolor='purple', alpha=0.7, label='Negative Bias'),
+            mpatches.Patch(facecolor='lightgray', label='Bias Node')
+        ]
+        
+        for i, color in enumerate(layer_colors[:self.num_layers]):
+            layer_name = "Input" if i == 0 else "Output" if i == self.num_layers - 1 else f"Hidden {i}"
+            legend_elements.append(mpatches.Patch(facecolor=color, alpha=0.7, label=f"{layer_name} Layer"))
+        
+        ax.legend(handles=legend_elements, loc='upper right')
+        
+        plt.figtext(0.01, 0.01, 
+                "Notation on connections:\nw: weight value\ng: gradient value", 
+                fontsize=10,
+                bbox=dict(facecolor='white', edgecolor='black', alpha=0.7))
+        
+        ax.axis('off')
+        plt.tight_layout()
         plt.show()
 
     def plot_weight_and_gradient_distribution(self, layers_to_plot):
