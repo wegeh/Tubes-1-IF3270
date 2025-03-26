@@ -25,4 +25,4 @@ def categorical_cross_entropy_loss(y_true, y_pred, eps=1e-15):
 def d_categorical_cross_entropy_loss(y_true, y_pred, eps=1e-15):
     y_pred = np.clip(y_pred, eps, 1 - eps)
     size = y_true.shape[0]
-    return - (y_true / y_pred) / size
+    return - (y_true - y_pred) / size
