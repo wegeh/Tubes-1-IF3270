@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from ffnn import FFNN
 from activation import relu, softmax
 from loss import categorical_cross_entropy_loss, d_categorical_cross_entropy_loss
-from initialization import init_weights_normal
+from initialization import init_weights_normal, init_weights_he
 from tqdm import tqdm
 
 def load_and_prepare_data():
@@ -26,11 +26,11 @@ def load_and_prepare_data():
     return X_train, X_test, y_train, y_test
 
 def run_experiment(X_train, y_train, X_test, y_test):
-    layers = [128, 64, 10]  
-    activations = [relu, softmax, relu]  
-    init_params = {'mean': 0, 'variance': 0.1, 'seed': 42}
+    layers = [784, 128, 64, 10]  
+    activations = [relu,  relu, softmax]  
+    init_params = {'lower_bound': 0, 'upper_bound': 0.5, 'seed': 42}
     batch_size = 32
-    epochs = 50
+    epochs = 20
     learning_rate = 0.01
 
     models = []
@@ -39,11 +39,11 @@ def run_experiment(X_train, y_train, X_test, y_test):
     # Model TANPA RMSNorm
     print("\nTraining model TANPA RMSNorm")
     model_no_norm = FFNN(
-        layers=[X_train.shape[1]] + layers,
+        layers=layers,
         activations=activations,
         loss_func=categorical_cross_entropy_loss,
         loss_grad=d_categorical_cross_entropy_loss,
-        init_method=init_weights_normal,
+        init_method=init_weights_he,
         init_params=init_params,
         reg_type=None,
         lambda_reg=0.0,
@@ -59,11 +59,11 @@ def run_experiment(X_train, y_train, X_test, y_test):
     # Model DENGAN RMSNorm
     print("\nTraining model DENGAN RMSNorm")
     model_rmsnorm = FFNN(
-        layers=[X_train.shape[1]] + layers,
+        layers=layers,
         activations=activations,
         loss_func=categorical_cross_entropy_loss,
         loss_grad=d_categorical_cross_entropy_loss,
-        init_method=init_weights_normal,
+        init_method=init_weights_he,
         init_params=init_params,
         reg_type=None,
         lambda_reg=0.0,
