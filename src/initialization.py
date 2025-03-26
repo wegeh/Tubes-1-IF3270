@@ -27,9 +27,9 @@ def init_weights_xavier_normal(shape, seed=None):
     std = np.sqrt(2 / (fan_in + fan_out))
     return np.random.normal(0, std, size=shape)
 
-def init_weights_he(shape, seed=None):
+def init_weights_he(shape, lower_bound, upper_bound, seed=None):
     if seed is not None:
         np.random.seed(seed)
     fan_in, _ = shape
     std = np.sqrt(2 / fan_in)
-    return np.random.normal(0, std, size=shape)
+    return np.random.normal(lower_bound, std, size=shape)

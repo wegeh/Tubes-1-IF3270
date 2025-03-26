@@ -5,6 +5,7 @@ import networkx as nx
 from activation import linear, d_linear, relu, d_relu, sigmoid, d_sigmoid, tanh, d_tanh, softmax, d_softmax, leaky_relu, d_leaky_relu, elu, d_elu
 from regularization import l1_regularization, l2_regularization
 from tqdm import tqdm  
+from initialization import init_weights_uniform, init_weights_zero
 
 class FFNN:
     def __init__(self, layers, activations, loss_func, loss_grad, init_method, init_params, 
@@ -39,7 +40,7 @@ class FFNN:
             weight_shape = (layers[i-1], layers[i])
             bias_shape = (1, layers[i])
             self.weights.append(self.init_method(weight_shape, **init_params))
-            self.biases.append(self.init_method(bias_shape, **init_params))
+            self.biases.append(init_weights_zero(bias_shape))
             self.gradients[f"W{i}"] = np.zeros(weight_shape)
             self.gradients[f"b{i}"] = np.zeros(bias_shape)
         
@@ -72,6 +73,7 @@ class FFNN:
                 z = z_raw
                 if self.use_rmsnorm:
                     self.z_raw_values.append(z_raw)
+            
             self.z_values.append(z)
             a = self.activations[i](z)
             self.a_values.append(a)
@@ -83,7 +85,7 @@ class FFNN:
 
     def backward(self, X, y):
         m = X.shape[0]
-        y_pred = self.a_values[-1]
+        y_pred = self.forward(X)
         delta = self.loss_grad(y, y_pred)
         
         for i in reversed(range(self.num_layers - 1)):
@@ -118,21 +120,24 @@ class FFNN:
                 # Propagasi melalui RMSNorm:
                 delta = self.gamma[i] / r * (delta - z_raw * np.mean(z_raw * delta, axis=-1, keepdims=True) / (r**2))
             else:
+                if i == self.num_layers - 2 and act_func == softmax:
+                    pass
                 # Propagasi normal tanpa RMSNorm
-                if act_func == sigmoid:
-                    delta *= d_sigmoid(self.z_values[i])
-                elif act_func == relu:
-                    delta *= d_relu(self.z_values[i])
-                elif act_func == tanh:
-                    delta *= d_tanh(self.z_values[i])
-                elif act_func == linear:
-                    delta *= d_linear(self.z_values[i])
-                elif act_func == softmax:
-                    delta *= d_softmax(self.z_values[i])
-                elif act_func == leaky_relu:
-                    delta *= d_leaky_relu(self.z_values[i])
-                elif act_func == elu:
-                    delta *= d_elu(self.z_values[i])
+                else: 
+                    if act_func == sigmoid:
+                        delta *= d_sigmoid(self.z_values[i])
+                    elif act_func == relu:
+                        delta *= d_relu(self.z_values[i])
+                    elif act_func == tanh:
+                        delta *= d_tanh(self.z_values[i])
+                    elif act_func == linear:
+                        delta *= d_linear(self.z_values[i])
+                    elif act_func == softmax:
+                        delta *= d_softmax(self.z_values[i])
+                    elif act_func == leaky_relu:
+                        delta *= d_leaky_relu(self.z_values[i])
+                    elif act_func == elu:
+                        delta *= d_elu(self.z_values[i])
             
             a_prev = self.a_values[i]
             self.gradients[f"W{i+1}"] = np.dot(a_prev.T, delta) / m
