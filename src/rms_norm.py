@@ -101,40 +101,19 @@ def analyze_and_plot(models, histories, X_test, y_test):
     plt.grid(True)
     plt.show()
 
-    # Plot distribusi bobot (misal untuk layer hidden pertama)
-    # plt.figure(figsize=(15, 5))
-    # for i, label in enumerate(labels):
-    #     plt.subplot(1, len(labels), i+1)
-    #     weights = models[i].weights[0].flatten()  # layer 1 (setelah input)
-    #     plt.hist(weights, bins=30, alpha=0.7)
-    #     plt.title(f"Distribusi Bobot - {label} - Layer 1")
-    #     plt.xlabel("Nilai Bobot")
-    # plt.tight_layout()
-    # plt.show()
 
-    # # Plot distribusi gradien (misal untuk layer hidden pertama)
-    # plt.figure(figsize=(15, 5))
-    # for i, label in enumerate(labels):
-    #     plt.subplot(1, len(labels), i+1)
-    #     grads = models[i].gradients.get("W1", np.array([])).flatten()
-    #     plt.hist(grads, bins=30, alpha=0.7)
-    #     plt.title(f"Distribusi Gradien - {label} - Layer 1")
-    #     plt.xlabel("Nilai Gradien")
-    # plt.tight_layout()
-    # plt.show()
-
-    n_layers = len(models[0].weights)  # jumlah weight matrix, artinya jumlah "layer koneksi"
+    n_layers = len(models[0].weights) 
     for layer in range(n_layers):
         fig, axes = plt.subplots(2, 2, figsize=(12, 8))
         
-        # Distribusi Bobot - Tanpa RMSNorm (model index 0)
+        # Distribusi Bobot - Tanpa RMSNorm 
         weights_no_norm = models[0].weights[layer].flatten()
         axes[0, 0].hist(weights_no_norm, bins=30, alpha=0.7)
         axes[0, 0].set_title(f"Bobot Tanpa RMSNorm - Layer {layer+1}")
         axes[0, 0].set_xlabel("Nilai Bobot")
         axes[0, 0].set_ylabel("Frekuensi")
         
-        # Distribusi Bobot - Dengan RMSNorm (model index 1)
+        # Distribusi Bobot - Dengan RMSNorm 
         weights_rmsnorm = models[1].weights[layer].flatten()
         axes[0, 1].hist(weights_rmsnorm, bins=30, alpha=0.7)
         axes[0, 1].set_title(f"Bobot Dengan RMSNorm - Layer {layer+1}")
@@ -159,12 +138,12 @@ def analyze_and_plot(models, histories, X_test, y_test):
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.show()
 
-    # Tampilkan graf struktur model (jika diinginkan)
+
     for i, label in enumerate(labels):
         print(f"\nMenampilkan graf struktur model untuk {label}:")
         models[i].display_model_graph()
 
-    # Plot distribusi bobot dan gradien menggunakan metode yang disediakan
+
     for i, label in enumerate(labels):
         print(f"\nPlot distribusi bobot dan gradien untuk {label}:")
         models[i].plot_weight_and_gradient_distribution([1])
