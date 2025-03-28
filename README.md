@@ -27,8 +27,8 @@ Repository ini berisi implementasi model Feedforward Neural Network (FFNN) untuk
 
 ## Pembagian Tugas
 - **Filbert (13522021)**
-  - **Kontribusi**: Laporan, L1 dan L2 Regularization, eksperimen.
+  - **Kontribusi**: Laporan, L1 dan L2 Regularization, bonus activation function, eksperiment.
 - **Benardo (13522055)**
-  - **Kontribusi**: Laporan, RMS Norm, eksperimen.
+  - **Kontribusi**: Laporan, RMS Norm, bonus initialization method, eksperiment.
 - **William Glory Henderson (13522113)**
-  - **Kontribusi**: Laporan, FFNN, activation function.
+  - **Kontribusi**: Laporan, FFNN class (all method), activation and loss function, initialization method.
