@@ -36,6 +36,13 @@ class FFNN:
         self.weights = []
         self.biases = []
         self.gradients = {}
+
+        if len(activations) != self.num_layers - 1:
+            raise ValueError(f"Jumlah fungsi aktivasi harus {self.num_layers - 1}")
+        
+        if loss_grad.__name__ != "d_" + loss_func.__name__:
+            raise ValueError("Turunan fungsi loss tidak sesuai dengan fungsi loss yang diberikan")
+        
         for i in range(1, self.num_layers):
             weight_shape = (layers[i-1], layers[i])
             bias_shape = (1, layers[i])
