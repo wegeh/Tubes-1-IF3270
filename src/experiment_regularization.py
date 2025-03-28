@@ -36,10 +36,10 @@ def load_and_prepare_data():
 
 def run_experiment(X_train, y_train, X_test, y_test):
     layers = [64, 64, 10]  
-    activations = [relu, relu, relu]  
+    activations = [relu, relu, softmax]  
     init_params = {'lower_bound': 0, 'upper_bound': 0.1, 'seed': 42} 
     batch_size = 32
-    epochs = 20
+    epochs = 50
     learning_rate = 0.01
 
     reg_types = [None, 'L1', 'L2']
@@ -121,6 +121,7 @@ def analyze_and_plot(models, histories):
             
     plt.tight_layout()
     plt.savefig('gradient_distribution.png')
+    plt.show()
 
 if __name__ == "__main__":
     X_train, X_test, y_train, y_test = load_and_prepare_data()
