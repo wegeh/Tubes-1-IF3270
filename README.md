@@ -9,23 +9,32 @@ Repository ini berisi implementasi model Feedforward Neural Network (FFNN) untuk
    git clone https://github.com/wegeh/Tubes-1-IF3270.git
    cd Tubes-1-IF3270
    ```
-2. **Instal Dependencies: Pastikan Anda telah menginstal pip. Kemudian, jalankan:**
+
+2. **Setup Environment (virtual environment pada Python):**
+   ```bash
+    python -m venv env
+    source env/bin/activate   # Untuk Linux/MacOS
+    env\Scripts\activate   # Untuk Windows
+   ```
+
+3. **Install Dependencies: Pastikan Anda telah menginstal pip. Kemudian, jalankan:**
    ```bash
     pip install -r requirements.txt
    ```
-3. **Menjalankan Program: Untuk menjalankan program, masuk ke folder src dan jalankan file Python yang diinginkan:**
+
+4. **Menjalankan Program: Untuk menjalankan program, masuk ke folder src dan jalankan file Python yang diinginkan:**
    ```bash
     python src/<nama_file_python.py>
    ```
     Anda juga dapat membuka dan menjalankan file Jupyter Notebook (.ipynb) yang tersedia untuk eksplorasi lebih lanjut.
 
 ## Struktur Repository
-- **src/**: Berisi kode sumber Python untuk implementasi FFNN dan eksperimen.
-- **doc/**: Berisi dokumen laporan lengkap.
+- **folder src**: Berisi kode sumber Python untuk implementasi FFNN dan eksperimen.
+- **folder doc**: Berisi dokumen laporan lengkap.
 - **requirements.txt**: Daftar dependencies yang diperlukan.
-- **README.md**: File dokumentasi ini.
+- **README.md**: Penjelasan mengenai tugas dan dokumentasi.
 
-## Pembagian Tugas
+## Pembagian Tugas (Kelompok 47)
 - **Filbert (13522021)**
   - **Kontribusi**: Laporan, L1 dan L2 Regularization, bonus activation function, eksperiment.
 - **Benardo (13522055)**
