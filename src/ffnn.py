@@ -409,6 +409,18 @@ class FFNN:
         plt.tight_layout()
         plt.show()
 
+    def plot_loss_history(self, history):
+        epochs = range(1, len(history["train_loss"]) + 1)
+        plt.figure(figsize=(8, 6))
+        plt.plot(epochs, history["train_loss"], label="Train Loss", marker='o')
+        plt.plot(epochs, history["val_loss"], label="Validation Loss", marker='o')
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.title("Training and Validation Loss per Epoch")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
     def save_model(self, filename):
         with open(filename, 'wb') as f:
             pickle.dump(self.__dict__, f)
