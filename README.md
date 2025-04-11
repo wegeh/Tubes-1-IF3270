@@ -40,4 +40,4 @@ Repository ini berisi implementasi model Feedforward Neural Network (FFNN) untuk
 - **Benardo (13522055)**
   - **Kontribusi**: Laporan, RMS Norm, bonus initialization method, eksperiment.
 - **William Glory Henderson (13522113)**
-  - **Kontribusi**: Laporan, FFNN class (all method), activation and loss function, initialization method.
+  - **Kontribusi**: Laporan, FFNN class, activation and loss function, initialization method, eksperiment.
