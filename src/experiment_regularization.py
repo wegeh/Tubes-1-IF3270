@@ -25,12 +25,9 @@ def load_and_prepare_data():
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
-    # One-hot encode label
     encoder = OneHotEncoder(sparse_output=False, categories='auto')
     y_onehot = encoder.fit_transform(y.to_numpy().reshape(-1, 1))
 
-
-    # Membagi data menjadi training dan validation
     X_train, X_test, y_train, y_test = train_test_split(X, y_onehot, test_size=0.2, random_state=42)
     return X_train, X_test, y_train, y_test
 
@@ -98,9 +95,9 @@ def analyze_and_plot(models, histories):
     plt.grid(True)
     plt.show()
 
-    # Plot weight distributions for each regularization type
+    # Plot weight distributions
     plt.figure(figsize=(15, 10))
-    for l in range(1, len(layers)+1):  # For each layer
+    for l in range(1, len(layers)+1): 
         for i, reg_type in enumerate(['No reg', 'L1 reg', 'L2 reg']):
             plt.subplot(len(layers), len(['No reg', 'L1 reg', 'L2 reg']), (l-1)*len(['No reg', 'L1 reg', 'L2 reg']) + i + 1)
             weights = models[i].weights[l-1].flatten()
@@ -111,7 +108,7 @@ def analyze_and_plot(models, histories):
     plt.show()
 
     plt.figure(figsize=(15, 10))
-    for l in range(1, len(layers)+1):  # For each layer
+    for l in range(1, len(layers)+1): 
         for i, reg_type in enumerate(['No reg', 'L1 reg', 'L2 reg']):
             plt.subplot(len(layers), len(['No reg', 'L1 reg', 'L2 reg']), (l-1)*len(['No reg', 'L1 reg', 'L2 reg']) + i + 1)
             gradients = models[i].gradients[f"W{l}"].flatten()
